@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>MooVee</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" media="screen" href="styles_reset.css">
+  <link rel="stylesheet" type="text/css" media="screen" href="index.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,700|Cabin:400,700|Roboto:400,700" rel="stylesheet">
+  
+  <style>
+    [draggable] {
+      -moz-user-select: none;
+      -khtml-user-select: none;
+      -webkit-user-select: none;
+      user-select: none;
+      /* Required to make elements draggable in old WebKit */
+      -khtml-user-drag: element;
+      -webkit-user-drag: element;
+    }
+  </style>
+  
+</head>
+<body>
+
+  
+  <div class="container-wrapper">
+    <div class="container" >
+      <h4>
+        MooVee Drag and Drop
+      </h4>
+    </div>
+  </div>
+
+  <div class="container-wrapper">
+    <div class="container" >
+      <ul id="moovee" >
+        <li class="moovee-item" >
+          <span class="handel fa fa-bars" id="handel-1" ></span>
+          <span class="item-text" >
+            Item 1
+          </span>
+        </li>
+        <li class="moovee-item" >
+          <span class="handel fa fa-bars" id="handel-2" ></span>
+          <span class="item-text" >
+            Item 2
+          </span>
+        </li>
+        <li class="moovee-item" >
+          <span class="handel fa fa-bars" id="handel-3" ></span>
+          <span class="item-text" >
+            Item 3
+          </span>
+        </li>
+        <li class="moovee-item" >
+          <span class="handel fa fa-bars" id="handel-4" ></span>
+          <span class="item-text" >
+            Item 4
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="moovee.min.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

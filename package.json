@@ -1,0 +1,70 @@
+{
+  "name": "moovee",
+  "version": "1.0.0",
+  "description": "small and simple drag and drop",
+  "main": "build/moovee.min.js",
+  "module": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lancetipton/moovee.git"
+  },
+  "author": "Lance Tipton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lancetipton/moovee/issues"
+  },
+  "homepage": "https://github.com/lancetipton/moovee#readme",
+  "scripts": {
+    "test": "NODE_ENV=test jest --verbose",
+    "dev": "NODE_ENV=development webpack --watch --progress",
+    "build": "NODE_ENV=production webpack --mode production",
+    "deploy": "gh-pages -d build"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.4.3",
+    "@babel/plugin-transform-object-assign": "^7.2.0",
+    "@babel/plugin-transform-property-literals": "^7.2.0",
+    "@babel/preset-env": "^7.4.3",
+    "babel-loader": "^8.0.5",
+    "babel-jest": "^24.7.1",
+    "jest": "^24.7.1",
+    "jest-cli": "^24.7.1",
+    "clean-webpack-plugin": "^1.0.0",
+    "copy-webpack-plugin": "^4.6.0",
+    "gh-pages": "^2.0.1",
+    "html-webpack-plugin": "^3.2.0",
+    "lodash.clonedeep": "^4.5.0",
+    "raw-loader": "^2.0.0",
+    "remove-comments-loader": "^0.1.2",
+    "webpack": "^4.27.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.js?(x)"
+    ],
+    "collectCoverageFrom": [
+      "<rootDir>/src/scripts/elementr/index.js",
+      "<rootDir>/src/scripts/store/index.js"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "jsx",
+      "es6"
+    ],
+    "globals": {
+      "__DEV__": true
+    },
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "<rootDir>/setupTests.js"
+    ]
+  }
+}
