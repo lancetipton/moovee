@@ -1,4 +1,4 @@
-import { generateClamp, isRelative, uuid, addEvent, removeEvent } from './utils'
+import { uuid, addEvent, removeEvent } from './utils'
 import { Values } from './constants'
 import {
   dragstart,
@@ -12,15 +12,26 @@ import {
 } from './events'
 
 const cleanNode = (child, mooVee) => {
+  child.el.classList.remove(Values.MV_DND_CLS)
   removeEvent(child.handel, 'mousedown', mooVee.dragItems[child.id].mousedown)
-  Values.NODE_EVENTS.map(name => {
+  Values.DRAG_EVENTS.map(name => 
     removeEvent(child.el, name, mooVee.dragItems[child.id][name])
-  })
+  )
+  child.handel.style.cursor = undefined
 }
 
 const cleanUp = mooVee => {
-  Object.entries(mooVee.dragItems).map(([ id, child ]) => cleanNode(child, mooVee))
-
+  mooVee.rootEl.classList.remove(Values.MV_DND_ROOT_CLS)
+  Object.entries(mooVee.dragItems).map(([ id, child ]) => {
+    cleanNode(child, mooVee)
+    mooVee.dragItems[id].handel = undefined
+    mooVee.dragItems[id].el = undefined
+    mooVee.dragItems[id] = undefined
+  })
+  mooVee.dragItems = {}
+  mooVee.rootEl = undefined
+  const styleNode = document.getElementById(Values.MV_STYLE_ID)
+  styleNode && styleNode.parentNode.removeChild(styleNode)
 }
 
 const buildDragEl = (mooVee, domNode, settings) => {
@@ -28,48 +39,23 @@ const buildDragEl = (mooVee, domNode, settings) => {
   const data = {}
   const id = domNode.id || uuid()
   if(!domNode.id) domNode.id = id
-
+  domNode.classList.add(Values.MV_DND_CLS)
+  
   mooVee.dragItems[id] = {
     handel: domNode.querySelector(settings.handel) || domNode,
     el: domNode,
-    id: id
+    id: id,
+    events: {}
   }
-
-  // generate min / max ranges
-  if (settings.constrain){
-    const relTo = settings.relativeTo || domNode.parentNode
-    
-    let traverse = domNode
-    let minX = 0
-    let minY = 0
-    while (traverse !== relTo){
-      traverse = traverse.parentNode
-      if (isRelative(traverse)){
-        minX -= traverse.offsetLeft
-        minY -= traverse.offsetTop
-      }
-      if (traverse === relTo){
-        minX += traverse.offsetLeft
-        minY += traverse.offsetTop
-      }
-    }
-
-    const maxX = minX + relTo.offsetWidth - domNode.offsetWidth
-    const maxY = minY + relTo.offsetHeight - domNode.offsetHeight
-
-    data.xClamp = generateClamp(minX, maxX)
-    data.yClamp = generateClamp(minY, maxY)
-  }
-
-  mooVee.dragItems[id].data = data
-
-  // add init events to handle
-  mooVee.dragItems[id].mousedown = events.mousedown.bind(mooVee, id)
-  addEvent(mooVee.dragItems[id].handel, 'mousedown', mooVee.dragItems[id].mousedown)
+  mooVee.dragItems[id].handel.style.cursor = 'pointer'
+  mooVee.dragItems[id].data = data  // add init events to handle
+  mooVee.dragItems[id].events.mousedown = events.mousedown.bind(mooVee, id, buildDragEl)
+  addEvent(
+    mooVee.dragItems[id].handel, 'mousedown', mooVee.dragItems[id].events.mousedown)
   
-  Values.NODE_EVENTS.map(name => {
-    mooVee.dragItems[id][name] = events[name].bind(mooVee, id)
-    addEvent(domNode, name, mooVee.dragItems[id][name])
+  Values.DRAG_EVENTS.map(name => {
+    mooVee.dragItems[id].events[name] = events[name].bind(mooVee, id)
+    addEvent(domNode, name, mooVee.dragItems[id].events[name])
   })
 }
 
@@ -103,6 +89,7 @@ class MooVee {
   constructor(el, settings){
     if (!el) throw Error('Moovee requires a dom node as the first argument')
     this.rootEl = el
+    this.rootEl.classList.add(Values.MV_DND_ROOT_CLS)
     this.dragItems = {}
     buildMooVee(this, settings)
   }
@@ -111,6 +98,15 @@ class MooVee {
     settings = settings || this.settings
     this.destroy()
     buildMooVee(this, settings)
+  }
+  
+  lock = (id, state) => {
+    const dragItem = mooVee.dragItems[id]
+    if(!dragItem) return
+    dragItem.locked = state
+    dragItem.locked
+      ? dragItem.el.classList.add(Values.MV_DND_LOCKED_CLS)
+      : dragItem.el.classList.remove(Values.MV_DND_LOCKED_CLS)
   }
   
   destroy = () => cleanUp()

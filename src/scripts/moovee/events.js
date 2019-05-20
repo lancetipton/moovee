@@ -1,26 +1,71 @@
-import { generateMoveFn, addEvent, removeEvent } from './utils'
+import {
+  addEvent,
+  removeEvent,
+  checkCall,
+  toggleNoPointerEvents,
+  swapElements
+} from './utils'
 import { Values } from './constants'
-
-const move = generateMoveFn()
 
 const getDomNode = (dragItems, id) => (
   dragItems[id] && dragItems[id].el
 )
 
-export function mousedown(id, e){
-  const { events, dragItems } = this
-  const domNode = getDomNode(dragItems, id)
-  if(!domNode) return
-    
-  domNode.setAttribute('draggable', true)
+const afterDragCleanup = (mooVee) => {
+  Object
+    .entries(mooVee.dragItems)
+    .map(([id, child]) => child.el.classList.remove(Values.MV_DND_OVER_CLS))
+  // Turn no pointer events off
+  toggleNoPointerEvents(false)
+  mooVee.hasClone = undefined
+  mooVee.activeDragId = undefined
+}
+
+export function mousedown(id, buildDragEl, e){
+  const { events, dragItems, settings } = this
+  const dragNode = getDomNode(dragItems, id)  
+  if(!dragNode || !dragItems[id] || dragItems[id].locked) return
+  
+  // Check if the item is set to clone
+  if(dragItems[id].clone && !this.hasClone){
+    // If it's set to clone, then copy it and build the clone dragItem
+    this.hasClone = true
+    const nodeClone = dragNode.cloneNode(true)
+    nodeClone.removeAttribute('draggable')
+    nodeClone.classList.remove(Values.MV_DRAG_CLS)
+    nodeClone.id = undefined
+    dragNode.parentNode.insertBefore(nodeClone, dragNode.nextSibling)
+    buildDragEl(this, nodeClone, settings)
+  }
+
+  // Turn no pointer events on
+  toggleNoPointerEvents(true)
+  dragNode.setAttribute('draggable', true)
+}
+
+// mouse events
+export function dragstart(id, e){
+  const { dragItems, settings } = this
+  const dragNode = getDomNode(dragItems, id)
+  if(!dragNode) return
+
+  checkCall(settings.onDragStart, e, this, dragNode)
+
+  this.activeDragId = id
+  dragNode.classList.add(Values.MV_DRAG_CLS)
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('text/html', dragNode.outerHTML)
+  // e.dataTransfer.setDragImage(dragNode, 0, 0)
 }
 
 export function dragover(id, e) {
-  const { dragItems, activeDragId } = this
+  const { dragItems, activeDragId, settings } = this
   const passiveNode = getDomNode(dragItems, id)
   const dragNode = getDomNode(dragItems, activeDragId)
   if(!passiveNode || !dragNode || dragNode === passiveNode) return false
   
+  checkCall(settings.onDragOver, e, this, dragNode, passiveNode)
+
   if (e.preventDefault) e.preventDefault()
   e.dataTransfer.dropEffect = 'move'
 
@@ -28,92 +73,74 @@ export function dragover(id, e) {
 }
 
 export function dragenter(id, e) {
-  const { dragItems, activeDragId } = this
-  const passiveNode = getDomNode(dragItems, id)
+  const { dragItems, activeDragId, settings } = this
+  const passiveDrag = dragItems[id]
+  const passiveNode = passiveDrag && passiveDrag.el
   const dragNode = getDomNode(dragItems, activeDragId)
-  if(!passiveNode || !dragNode || dragNode === passiveNode) return
+  if(!passiveNode || !dragNode || dragNode === passiveNode || passiveDrag.locked)
+    return
+
+  checkCall(settings.onDragEnter, e, this, dragNode, passiveNode)
   
-  passiveNode.classList.add('over');
+  // If noSwap is falsy, that means we SHOULD swap the elements
+  !settings.noSwap &&
+    // If autoSwap is not false, then autoSwap the elements on dragEnter
+    settings.autoSwap !== false &&
+    swapElements(dragNode, passiveNode)
+
+  passiveNode.classList.add(Values.MV_DND_OVER_CLS)
+
 }
 
 export function dragleave(id, e) {
-  const { dragItems, activeDragId } = this
+  const { dragItems, activeDragId, settings } = this
   const passiveNode = getDomNode(dragItems, id)
   const dragNode = getDomNode(dragItems, activeDragId)
   if(!passiveNode || !dragNode || dragNode === passiveNode) return false
   
-  passiveNode.classList.remove('over');
+  checkCall(settings.onDragLeave, e, this, dragNode, passiveNode)
+
+  passiveNode.classList.remove(Values.MV_DND_OVER_CLS)
 }
 
-// mouse events
-export function dragstart(id, e){
+export function drag(id, e){
   const { events, settings, dragItems } = this
-  const domNode = getDomNode(dragItems, id)
-  if(!domNode) return
+  const dragNode = getDomNode(dragItems, id)
+  if(!dragNode) return
 
-  if (typeof settings.onDragStart === 'function')
-    settings.onDragStart(domNode, e)
-  
-  this.dragItems[id].drag = events.drag.bind(this, id)
-  this.dragItems[id].dragend = events.dragend.bind(this, id)
-  this.activeDragId = id
-  addEvent(domNode, 'drag', this.dragItems[id].drag)
-  addEvent(domNode, 'dragend', this.dragItems[id].dragend)
-  
-  e.dataTransfer.effectAllowed = 'move'
-  e.dataTransfer.setData('text/html', domNode.outerHTML)
-  // e.dataTransfer.setDragImage(domNode, 0, 0)
-}
-
-export function drag(id, offsetW, offsetH, e){
-
-  const { events, settings, dragItems } = this
-  const domNode = getDomNode(dragItems, id)
-  if(!domNode) return
-
-  if (typeof settings.onDrag === 'function')
-    settings.onDrag(domNode, e)
+  checkCall(settings.onDrag, e, this, dragNode)
 
   return false
 }
 
 export function dragend(id, e){
   const { events, settings, dragItems } = this
-  const domNode = getDomNode(dragItems, id)
-  if(!domNode) return
+  const dragNode = getDomNode(dragItems, id)
+  if(!dragNode) return
 
-  if (typeof settings.onDragEnd === 'function')
-    settings.onDragEnd(domNode, e)
+  checkCall(settings.onDragEnd, e, this, dragNode)
   
-  Values.ITEM_DRAG_EVENTS.map(name => {
-    removeEvent(domNode, name, this.dragItems[id][name])
-    this.dragItems[id][name] = undefined
-  })
+  dragNode.removeAttribute('draggable')
+  dragNode.classList.remove(Values.MV_DRAG_CLS)
 
-  domNode.removeAttribute('draggable')
-  this.activeDragId = undefined
+  afterDragCleanup(this)
 }
 
-
 export function drop(id, e){
-  if (e.stopPropagation)
-    e.stopPropagation()
-    
-    
+  if (e.stopPropagation) e.stopPropagation()
+
   const { dragItems, activeDragId, settings } = this
   const passiveNode = getDomNode(dragItems, id)
   const dragNode = getDomNode(dragItems, activeDragId)
-  if(!passiveNode || !dragNode || dragNode === passiveNode) return
+  if(!passiveNode || !dragNode || dragNode === passiveNode || dragItems[id].locked) return
 
-  if (typeof settings.onDrop === 'function')
-    settings.onDrop(domNode, passiveNode, e)
+  checkCall(settings.onDrop, e, this, dragNode, passiveNode)
   
-  // Do update here
-  console.log('------------------Do update here------------------');
-  console.log(e.dataTransfer.getData('text/html'));
-  // dragSrcEl.innerHTML = this.innerHTML
-  // this.innerHTML = e.dataTransfer.getData('text/html')
-  Object.entries(dragItems).map(([id, child]) => child.el.classList.remove('over'))
+  // If noSwap is falsy, that means we SHOULD swap the elements
+  !settings.noSwap &&
+    // If autoSwap if false it means we didn't swap in dragEnter so do it now
+    settings.autoSwap === false &&
+    swapElements(dragNode, passiveNode)
 
-  return false;
+  return false
 }

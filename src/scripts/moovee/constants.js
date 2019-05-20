@@ -1,18 +1,11 @@
 const noOp = () => {}
 
 export const Values = Object.freeze({
-  ITEM_DRAG_EVENTS: Object.freeze([
-    'drag',
-    'dragenter',
-    'dragover',
-    'dragleave',
-    'dragend',
-  ]),
-  NODE_EVENTS: Object.freeze([
+  DRAG_EVENTS: Object.freeze([
     'dragstart',
-    'dragenter',
-    'dragover',
     'drag',
+    'dragover',
+    'dragenter',
     'dragleave',
     'dragend',
     'drop',
@@ -24,11 +17,17 @@ export const Values = Object.freeze({
     onDragEnter: noOp,
     onDragLeave: noOp,
     onDragEnd: noOp,
+    onDrop: noOp,
   }),
   SETTINGS: Object.freeze({
-    constrain: false,
-    relativeTo: null,
+    autoSwap: true,
+    noSwap: false,
     handle: null,
-    highlightInputs: false,
   }),
+  MV_DND_ROOT_CLS: 'mv-dnd-container',
+  MV_DND_CLS: 'mv-dnd-item',
+  MV_DRAG_CLS: 'mv-dnd-drag-item',
+  MV_DND_OVER_CLS: 'mv-dnd-over-item',
+  MV_STYLE_ID: 'mv-dnd-item-styles',
+  MV_DND_LOCKED_CLS: 'mv-dnd-locked'
 })
