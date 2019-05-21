@@ -39,13 +39,13 @@ export const swapElements = (node1, node2) => {
     : parent2.appendChild(node1)
 }
 
-export const sortChildren = (items, parent, sortCb) => (
-  parent && 
-    parent.appendChild &&
-    items && 
-    Array.from(items)
-      .sort(sortCb).map(parent.appendChild)
-)
+export const moveElement = (node1, node2) => {
+  console.log('------------------Need to add moveing to last el------------------');
+  // TODO: Does not allow moving into last pos of list
+  const parent = node2.parentNode
+  parent && parent.insertBefore(node1, node2)
+}
+
 
 export const toggleNoPointerEvents = add => {
   let styleNode = document.getElementById(Values.MV_STYLE_ID)
@@ -57,10 +57,16 @@ export const toggleNoPointerEvents = add => {
       styleNode.appendChild(document.createTextNode(""))
       document.head.appendChild(styleNode)
     }
-    styleNode.sheet.insertRule(`.${Values.MV_DND_CLS} * { pointer-events: none; }`, 0)
+    styleNode.sheet.insertRule(
+      `.${Values.MV_DND_CLS} * { pointer-events: none !important; }`,
+      0
+    )
     return
   }
 
   styleNode && styleNode.sheet.deleteRule(0)
 }
 
+export const getSettings = mooVee => (
+  mooVee && mooVee.settings && mooVee.rootEl && mooVee.settings[mooVee.rootEl.id]
+)
